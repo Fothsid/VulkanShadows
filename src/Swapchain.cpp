@@ -380,10 +380,8 @@ void Swapchain::recordFrame(std::function<void(Swapchain&, VkCommandBuffer)> con
         vkWaitForFences(renderer.device, 1, &renderFence, VK_TRUE, UINT64_MAX);
         VKCHECK(vkGetQueryPoolResults(renderer.device, renderer.queryPool, 0, ARRAY_COUNT(timestamps), sizeof(timestamps),
                                       timestamps, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
-        timestamps[0] &= renderer.timestampMask;
-        timestamps[1] &= renderer.timestampMask;
-        float delta = glm::abs(float(timestamps[1]) - float(timestamps[0]));
-        float milliseconds = delta * renderer.deviceProperties.limits.timestampPeriod / 1000000.0f;
+        double delta = (timestamps[1] - timestamps[0]) & renderer.timestampMask;
+        double milliseconds = delta * renderer.deviceProperties.limits.timestampPeriod / 1000000.0;
         std::cout << milliseconds << "\n";
     }
 }
