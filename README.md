@@ -16,20 +16,24 @@ This is an application demonstrating several shadow-rendering techniques using V
 - `cmake` (>=3.11)
 - `g++` (GCC >=13)
 - `glslc` from [shaderc](https://github.com/google/shaderc)
-- Vulkan headers and loader (>=1.2).
+- Vulkan headers (>=1.2), loader, and utility libraries.
 - SDL2
 
-On Arch Linux these dependencies can be installed using the following command:
+On Arch Linux, these dependencies can be installed using the following command:
 ```
-pacman -S gcc cmake shaderc sdl2-compat vulkan-headers vulkan-icd-loader
+sudo pacman -S gcc cmake shaderc sdl2-compat vulkan-headers vulkan-icd-loader
+```
+On Ubuntu, this command can be used instead:
+```
+sudo apt install g++ libvulkan-dev vulkan-utility-libraries-dev glslc cmake git libsdl2-dev
 ```
 
 2. Clone the repository and download the submodules:  
 ```
-git clone --recurse-submodules git://github.com/Fothsid/VulkanShadows
+git clone --recurse-submodules https://github.com/Fothsid/VulkanShadows.git
 ```
 
-3. Generate build files for Visual Studio using CMake:
+3. Generate build files using CMake:
 ```
 cmake -DCMAKE_BUILD_TYPE=Release -B build .
 ```
@@ -49,7 +53,7 @@ cmake --build build --config Release
 
 2. Clone the repository and download the submodules:  
 ```
-git clone --recurse-submodules git://github.com/Fothsid/VulkanShadows
+git clone --recurse-submodules https://github.com/Fothsid/VulkanShadows.git
 ```
 
 > WARNING: Source code downloaded via GitHub's "Download ZIP" button will not work as it does not include submodules.
