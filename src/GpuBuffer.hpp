@@ -9,6 +9,7 @@
 #include <vk_mem_alloc.h>
 #include "Renderer.hpp"
 
+/// Base class for VkBuffer and VmaAllocation
 class GpuBuffer {
 public:
     static constexpr VkBufferUsageFlags USAGE_VERTEXBUFFER = VK_BUFFER_USAGE_TRANSFER_DST_BIT
@@ -52,6 +53,7 @@ protected:
     VmaAllocationInfo allocationInfo;
 };
 
+/// For passing data to shaders using buffer device address feature.
 class GpuShaderBuffer : public GpuBuffer {
 public:
     GpuShaderBuffer(Renderer& renderer, uint64_t size)
@@ -67,6 +69,7 @@ protected:
     VkDeviceAddress gpuAddress;
 };
 
+/// For storing vertex data.
 class GpuVertexBuffer : public GpuBuffer {
 public:
     GpuVertexBuffer(Renderer& renderer, uint64_t size)
@@ -78,6 +81,7 @@ public:
     }
 };
 
+/// For storing index data.
 class GpuIndexBuffer : public GpuBuffer {
 public:
     GpuIndexBuffer(Renderer& renderer, uint64_t size)
@@ -89,6 +93,7 @@ public:
     }
 };
 
+/// For storing both vertex and index data.
 class GpuVertexIndexBuffer : public GpuBuffer {
 public:
     GpuVertexIndexBuffer(Renderer& renderer, uint64_t size)
@@ -103,6 +108,7 @@ public:
     }
 };
 
+/// For memory transfers between CPU and GPU.
 class GpuStagingBuffer : public GpuBuffer {
 public:
     GpuStagingBuffer(Renderer& renderer, uint64_t size)

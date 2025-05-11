@@ -28,9 +28,6 @@ struct LightResult {
 };
 
 float getShadowFactor(vec4 pos, Light light) {
-    if (light.shadowMap == 0)
-        return 0;
-
     vec3 dir = pos.xyz - light.position;
 
     // Getting the cubemap face-specific depth and applying perspective

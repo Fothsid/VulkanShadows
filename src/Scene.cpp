@@ -121,11 +121,12 @@ void Scene::recordDrawBufferUpdates(VkCommandBuffer cmdbuf) {
 void Scene::recordMeshDraw(VkCommandBuffer cmdbuf, int meshID, uint32_t baseFlags, eSceneDrawType drawType) {
     const auto& mesh = meshes[meshID];
     for (const auto& group : mesh.primGroups) {
-        pushConstants.material = materialBuffer->getGpuAddress() + sizeof(MaterialData) * group.materialID;
-
         uint32_t flags = baseFlags;
 
+        pushConstants.material = materialBuffer->getGpuAddress(); // Use default material if no material is assigned to mesh
         if (group.materialID < gltfModel.materials.size()) {
+            pushConstants.material += sizeof(MaterialData) * (group.materialID + 1);
+
             const auto& gltfMaterial = gltfModel.materials[group.materialID];
             if (!gltfMaterial.doubleSided) {
                 if (drawType == eSceneDrawType_ShadowMap && shadowMapConf.cullFrontFaces) {
@@ -291,8 +292,8 @@ void Scene::recordCubeFace(VkCommandBuffer cmdbuf, int lightID, int faceID) {
 
     LightData& light = lights[lightID];
 
-    // View matrix calculation based on the Vulkan samples by
-    // Sascha Willems at https://github.com/SaschaWillems/Vulkan
+    // View matrix calculation based on the Vulkan samples by Sascha Willems at
+    // https://github.com/SaschaWillems/Vulkan/blob/master/examples/shadowmappingomni/shadowmappingomni.cpp
     CameraData lcam;
     lcam.projection = glm::perspective(halfpi, 1.0f, light.zNear, light.zFar);
     lcam.view = glm::mat4(1.0f);
@@ -378,7 +379,7 @@ void Scene::recordCubeFace(VkCommandBuffer cmdbuf, int lightID, int faceID) {
 void Scene::allocateBuffers() {
     materialBuffer = std::make_unique<GpuShaderBuffer>(
         renderer,
-        sizeof(MaterialData) * gltfModel.materials.size()
+        sizeof(MaterialData) * (gltfModel.materials.size() + 1) // Additional slot for the default material.
     );
     lightBuffer = std::make_unique<GpuShaderBuffer>(
         renderer,
@@ -533,6 +534,13 @@ glm::mat4 Scene::getNodeTransform(int nodeID) {
 }
 
 void Scene::loadMaterials() {
+    auto& defaultMaterial = materials.emplace_back();
+    defaultMaterial.baseColorTID = 0;
+    defaultMaterial.diffuse      = {1,1,1,1};
+    defaultMaterial.ambient      = {0,0,0,1};
+    defaultMaterial.alphaCutoff  = 0.5f;
+    defaultMaterial.samplerID    = eSampler_Linear;
+
     for (const auto& gltfMaterial : gltfModel.materials) {
         auto& material = materials.emplace_back();
         const auto& pbr = gltfMaterial.pbrMetallicRoughness;
@@ -553,13 +561,10 @@ void Scene::loadMaterials() {
         if (pbr.baseColorTexture.index >= 0) {
             material.baseColorTID = gltfModel.textures[pbr.baseColorTexture.index].source + 1;
         }
-        material.alphaCutoff  = gltfMaterial.alphaMode[0] == 'M' ? gltfMaterial.alphaCutoff : 0;
-        material.samplerID    = eSampler_Linear;
-        
-        // Trying to adapt the pbrMetallicRoughness model to the classic Phong model.
-        material.ambient  = emissiveFactor;
-        material.diffuse  = baseColorFactor;
-        material.specular = glm::mix(glm::vec4(1), baseColorFactor, float(pbr.metallicFactor));
+        material.alphaCutoff = gltfMaterial.alphaMode[0] == 'M' ? gltfMaterial.alphaCutoff : 0;
+        material.samplerID   = eSampler_Linear;
+        material.ambient     = emissiveFactor;
+        material.diffuse     = baseColorFactor;
     }
 
     GpuStagingBuffer staging(renderer, materialBuffer->getSize());

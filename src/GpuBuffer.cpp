@@ -15,8 +15,7 @@ GpuBuffer::GpuBuffer(Renderer& renderer,
     : renderer(renderer)
     , size(size)
 {
-    VkBufferCreateInfo bci = {};
-    bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    VkBufferCreateInfo bci = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
     bci.size  = size;
     bci.usage = usage;
      

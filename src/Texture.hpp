@@ -18,6 +18,8 @@ enum eTextureUsage {
     eTextureUsageCount,
 };
 class Renderer; // Forward declaration
+
+/// Base class for an image and an image view.
 class Texture {
 public:
     ~Texture();
@@ -34,15 +36,6 @@ public:
             uint32_t height,
             uint32_t arrayLayers = 1,
             uint32_t mipmapLevels = 1);
-
-    /// Takes in a VkImage from the swapchain.
-    /// Assumes eTextureUsage_RenderTarget.
-    Texture(VkDevice device,
-            VkImage image,
-            VkFormat format,
-            VkImageLayout layout,
-            uint32_t width,
-            uint32_t height);
 
     Texture(const Texture&) = delete; // No copying.
     Texture(Texture&& orig);          // Move constructor
@@ -74,6 +67,19 @@ public:
 
     VkImageAspectFlags getImageAspectFlags();
 protected:
+    /// Preallocated image, meant for usage by child classes. Creates an image view
+    /// for the supplied image.
+    Texture(VkDevice device,
+            VkImage image,
+            eTextureUsage usage,
+            VkImageViewType type,
+            VkFormat format,
+            VkImageLayout layout,
+            uint32_t width,
+            uint32_t height,
+            uint32_t arrayLayers = 1,
+            uint32_t mipmapLevels = 1);
+
     VkDevice        device;
     VmaAllocator    allocator;
     eTextureUsage   usage;
@@ -86,16 +92,36 @@ protected:
     uint32_t width, height, arrayLayers, mipmapLevels;
 };
 
+/// Render target texture for swapchain images.
+class SwapchainTexture : public Texture {
+public:
+    SwapchainTexture(VkDevice device,
+                     VkRenderPass renderPass,
+                     VkImage image,
+                     VkFormat format,
+                     uint32_t width,
+                     uint32_t height,
+                     VkImageView depthView);
+    ~SwapchainTexture();
+
+    /// No copying.
+    SwapchainTexture(const SwapchainTexture&) = delete;
+
+    /// Move constructor.
+    SwapchainTexture(SwapchainTexture&&);
+
+    VkFramebuffer getFramebuffer() const { return framebuffer; }
+private:
+    VkFramebuffer framebuffer;
+};
+
+/// 2D texture for sampling in the fragment shader.
 class Texture2D : public Texture {
 public:
     Texture2D(Renderer& renderer, VkFormat format, uint32_t width, uint32_t height);
 };
 
-class RenderTexture2D : public Texture {
-public:
-    RenderTexture2D(Renderer& renderer, VkFormat format, uint32_t width, uint32_t height);
-};
-
+/// Cube depth texture for rendering and sampling.
 class TextureCubeShadowMap : public Texture {
 public:
     TextureCubeShadowMap(Renderer& renderer, VkRenderPass renderPass, uint32_t pxSize);

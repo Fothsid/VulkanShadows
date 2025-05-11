@@ -45,7 +45,7 @@ private:
     void fetchCaps();
     void createSwapchain();
     void createRenderPass();
-    void createFramebuffers();
+    void createTextures();
     void createCommandBuffers();
     void createSyncObjects();
 
@@ -53,29 +53,27 @@ private:
     // is destroyed, and that one is owned by the Renderer.
     void destroySwapchain();
     void destroyRenderPass();
-    void destroyFramebuffers();
+    void destroyTextures();
     void destroySyncObjects();
 
     VkPresentModeKHR   selectPresentMode();
     VkSurfaceFormatKHR selectSurfaceFormat();
     VkExtent2D         selectExtent();
 
-    Renderer&                  renderer;
-    VkSwapchainKHR             swapchain;
-    VkExtent2D                 extent;
-    VkSurfaceFormatKHR         surfaceFormat;
-    VkPresentModeKHR           presentMode;
-    std::vector<Texture>       textures;
-    std::unique_ptr<Texture>   depthBuffer;
-    std::vector<VkFramebuffer> framebuffers;
-    VkRenderPass               renderPass;
-    VkCommandBuffer            commandBuffer;
-    VkSemaphore                imageAvailableSema;
-    VkSemaphore                renderFinishedSema;
-    VkFence                    renderFence;
-    uint32_t                   imageIndex;
-    VkFramebuffer              currentFramebuffer;
-    uint64_t                   timestamps[2];
+    Renderer&                     renderer;
+    VkSwapchainKHR                swapchain;
+    VkExtent2D                    extent;
+    VkSurfaceFormatKHR            surfaceFormat;
+    VkPresentModeKHR              presentMode;
+    std::vector<SwapchainTexture> textures;
+    std::unique_ptr<Texture>      depthBuffer;
+    VkRenderPass                  renderPass;
+    VkCommandBuffer               commandBuffer;
+    VkSemaphore                   imageAvailableSema;
+    VkSemaphore                   renderFinishedSema;
+    VkFence                       renderFence;
+    uint32_t                      imageIndex;
+    uint64_t                      timestamps[2];
 
     std::vector<VkPresentModeKHR>   availablePresentModes;
     std::vector<VkSurfaceFormatKHR> availableSurfaceFormats;

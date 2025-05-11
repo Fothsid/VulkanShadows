@@ -14,9 +14,9 @@ This is an application demonstrating several shadow-rendering techniques using V
 
 1. Have the following available in your environment:  
 - `cmake` (>=3.11)
-- `g++` (GCC) with C++20 support.
+- `g++` (GCC >=13)
 - `glslc` from [shaderc](https://github.com/google/shaderc)
-- Vulkan headers and loader (>=1.3).
+- Vulkan headers and loader (>=1.2).
 - SDL2
 
 On Arch Linux these dependencies can be installed using the following command:
@@ -42,8 +42,8 @@ cmake --build build --config Release
 ### Windows
 
 1. Download and install:  
-- [Visual Studio 2022](https://visualstudio.microsoft.com/)
-- [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
+- [Visual Studio 2022 with MSVC >=16.10](https://visualstudio.microsoft.com/)
+- [Vulkan SDK (at least 1.2)](https://vulkan.lunarg.com/sdk/home)
 - [SDL2-devel (can be installed by the Vulkan SDK too)](https://github.com/libsdl-org/SDL/releases/tag/release-2.32.4)
 - [CMake](https://cmake.org/download/)
 

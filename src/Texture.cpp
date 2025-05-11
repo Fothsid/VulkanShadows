@@ -8,6 +8,49 @@
 #include "Texture.hpp"
 #include "Renderer.hpp"
 
+SwapchainTexture::SwapchainTexture(VkDevice device,
+                                   VkRenderPass renderPass,
+                                   VkImage image,
+                                   VkFormat format,
+                                   uint32_t width,
+                                   uint32_t height,
+                                   VkImageView depthView)
+    : Texture(device,
+              image,
+              eTextureUsage_RenderTarget,
+              VK_IMAGE_VIEW_TYPE_2D,
+              format,
+              VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+              width,
+              height)
+{
+    VkImageView views[] = {
+        view,
+        depthView
+    };
+
+    VkFramebufferCreateInfo fci = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+    fci.renderPass      = renderPass;
+    fci.width           = width;
+    fci.height          = height;
+    fci.layers          = 1;
+    fci.attachmentCount = 2;
+    fci.pAttachments    = views;
+    VKCHECK(vkCreateFramebuffer(device, &fci, nullptr, &framebuffer));
+}
+
+SwapchainTexture::~SwapchainTexture() {
+    vkDestroyFramebuffer(device, framebuffer, nullptr);
+    framebuffer = VK_NULL_HANDLE;
+}
+
+SwapchainTexture::SwapchainTexture(SwapchainTexture&& o)
+    : Texture(std::move(o))
+{
+    framebuffer   = o.framebuffer;
+    o.framebuffer = VK_NULL_HANDLE;
+}
+
 Texture2D::Texture2D(Renderer& renderer, VkFormat format, uint32_t width, uint32_t height)
     : Texture(renderer.getDevice(),
               renderer.getAllocator(),
@@ -15,17 +58,6 @@ Texture2D::Texture2D(Renderer& renderer, VkFormat format, uint32_t width, uint32
               VK_IMAGE_VIEW_TYPE_2D,
               format,
               VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-              width,
-              height)
-{}
-
-RenderTexture2D::RenderTexture2D(Renderer& renderer, VkFormat format, uint32_t width, uint32_t height)
-    : Texture(renderer.getDevice(),
-              renderer.getAllocator(),
-              eTextureUsage_RenderTarget,
-              VK_IMAGE_VIEW_TYPE_2D,
-              format,
-              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
               width,
               height)
 {}
@@ -64,11 +96,11 @@ TextureCubeShadowMap::TextureCubeShadowMap(Renderer& renderer, VkRenderPass rend
 
 TextureCubeShadowMap::~TextureCubeShadowMap() {
     for (auto& v : framebuffers) {
-        if (v) { vkDestroyFramebuffer(device, v, nullptr); }
+        vkDestroyFramebuffer(device, v, nullptr);
         v = VK_NULL_HANDLE;
     }
     for (auto& v : faceViews) {
-        if (v) { vkDestroyImageView(device, v, nullptr); }
+        vkDestroyImageView(device, v, nullptr);
         v = VK_NULL_HANDLE;
     }
 }
@@ -194,25 +226,29 @@ Texture::Texture(VkDevice device,
     vci.image = image;
     VKCHECK(vkCreateImageView(device, &vci, nullptr, &view));
 }
-    
+
 Texture::Texture(VkDevice device,
                  VkImage image,
+                 eTextureUsage usage,
+                 VkImageViewType type,
                  VkFormat format,
                  VkImageLayout layout,
                  uint32_t width,
-                 uint32_t height)
+                 uint32_t height,
+                 uint32_t arrayLayers,
+                 uint32_t mipmapLevels)
     : device(device)
     , allocator(VK_NULL_HANDLE)
-    , usage(eTextureUsage_RenderTarget)
-    , type(VK_IMAGE_VIEW_TYPE_2D)
+    , usage(usage)
+    , type(type)
     , format(format)
     , layout(layout)
     , image(image)
     , view(VK_NULL_HANDLE)
     , allocation(VK_NULL_HANDLE)
     , width(width), height(height)
-    , arrayLayers(1)
-    , mipmapLevels(1)
+    , arrayLayers(arrayLayers)
+    , mipmapLevels(mipmapLevels)
 {
     VkImageViewCreateInfo vci = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
     vci.viewType   = VK_IMAGE_VIEW_TYPE_2D;
@@ -224,7 +260,7 @@ Texture::Texture(VkDevice device,
         VK_COMPONENT_SWIZZLE_IDENTITY,
         VK_COMPONENT_SWIZZLE_IDENTITY
     };
-    vci.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1, };
+    vci.subresourceRange = { getImageAspectFlags(), 0, mipmapLevels, 0, arrayLayers };
 
     VKCHECK(vkCreateImageView(device, &vci, nullptr, &view));
 }

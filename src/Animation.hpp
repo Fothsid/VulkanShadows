@@ -37,8 +37,13 @@ class Animation {
 public:
     Animation(const tinygltf::Model& gltfModel, int animID);
 
+    /// Advances time by `timestep` and resamples the transforms.
     bool advance(float timestep);
+
+    /// Resets animation time.
     void reset();
+
+    /// Maps node ID -> transform
     std::unordered_map<int, AnimationTransform> nodes;
 protected:
     void resample();

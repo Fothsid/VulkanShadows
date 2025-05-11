@@ -43,7 +43,6 @@ public:
     struct alignas(16) MaterialData {
         glm::vec4 ambient;
         glm::vec4 diffuse;
-        glm::vec4 specular;
         float     alphaCutoff;
         uint32_t  samplerID;
         uint32_t  baseColorTID;
@@ -70,7 +69,7 @@ public:
         VkDeviceAddress lights;
         uint32_t        lightCount;
         uint32_t        textureBaseIndex;
-        uint32_t        currentLightID;
+        uint32_t        currentLightID; // Used only when rendering shadow volumes
     };
     // Vulkan specification guarantees that the GPU will
     // support at least 128 bytes of push constants.

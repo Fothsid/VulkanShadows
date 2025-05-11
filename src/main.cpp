@@ -291,7 +291,7 @@ int main(int argc, char* argv[]) {
             case eShadowTech_ShadowMapping:
                 ImGui::Text("Shadow mapping configuration:");
                 ImGui::Text("Used VkFormat for the shadow map: %s", string_VkFormat(renderer.getBestDepthFormat()));
-                ImGui::Combo("Shadow Map Resolution", &resolutionSelection, shadow_map_resolution_names, ARRAY_COUNT(shadow_map_resolution_names));
+                ImGui::Combo("Cube Shadow Map Face Resolution", &resolutionSelection, shadow_map_resolution_names, ARRAY_COUNT(shadow_map_resolution_names));
                 ImGui::Checkbox("Cull front faces in shadow maps when applicable", &conf.smCullFrontFaces);
                 ImGui::InputFloat("Depth Bias Constant Factor", &conf.smBiasConstant, 0, 0, "%.8f");
                 ImGui::InputFloat("Depth Bias Slope Factor", &conf.smBiasSlope, 0, 0, "%.8f");

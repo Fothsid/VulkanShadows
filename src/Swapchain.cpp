@@ -13,6 +13,22 @@
 #include "Swapchain.hpp"
 #include "RenderPassBuilder.hpp"
 
+struct SurfaceFormatPriority {
+    VkFormat format;
+    int priority;
+};
+
+static const SurfaceFormatPriority surface_format_priorities[][2] = {
+    {
+        { VK_FORMAT_B8G8R8A8_UNORM,  100 },
+        { VK_FORMAT_B8G8R8A8_SRGB,   50  },
+    },
+    {
+        { VK_FORMAT_B8G8R8A8_SRGB,   100 },
+        { VK_FORMAT_B8G8R8A8_UNORM,  50  },
+    },
+};
+
 Swapchain::Swapchain(Renderer& renderer)
     : renderer(renderer)
     , acquireAttemptCounter(0)
@@ -22,14 +38,14 @@ Swapchain::Swapchain(Renderer& renderer)
     fetchCaps();
     createSwapchain();
     createRenderPass();
-    createFramebuffers();
+    createTextures();
     createCommandBuffers();
     createSyncObjects();
 }
 
 Swapchain::~Swapchain() {
     destroySyncObjects();
-    destroyFramebuffers();
+    destroyTextures();
     destroyRenderPass();
     destroySwapchain();
 }
@@ -60,10 +76,10 @@ void Swapchain::fetchCaps() {
 
 void Swapchain::recreate() {
     vkDeviceWaitIdle(renderer.device);
-    destroyFramebuffers();
+    destroyTextures();
     fetchCaps();
     createSwapchain();
-    createFramebuffers();
+    createTextures();
     outdated = false;
 }
 
@@ -79,11 +95,8 @@ void Swapchain::destroyRenderPass() {
     }
 }
 
-void Swapchain::destroyFramebuffers() {
+void Swapchain::destroyTextures() {
     if (renderer.device) {
-        for (auto framebuffer : framebuffers) {
-            vkDestroyFramebuffer(renderer.device, framebuffer, nullptr);
-        }
         depthBuffer = nullptr;
         textures.clear();
     }
@@ -171,22 +184,11 @@ void Swapchain::createRenderPass() {
     renderPass = builder.create(renderer);
 }
 
-void Swapchain::createFramebuffers() {
+void Swapchain::createTextures() {
     uint32_t swapchainImageCount;
     vkGetSwapchainImagesKHR(renderer.device, swapchain, &swapchainImageCount, nullptr);
     std::vector<VkImage> images(swapchainImageCount);
     vkGetSwapchainImagesKHR(renderer.device, swapchain, &swapchainImageCount, images.data());
-
-    for (uint32_t i = 0; i < swapchainImageCount; ++i) {
-        textures.emplace_back(
-                renderer.device,
-                images[i],
-                surfaceFormat.format,
-                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                extent.width,
-                extent.height
-            );
-    }
 
     depthBuffer = std::make_unique<Texture>(
         renderer.device,
@@ -199,22 +201,16 @@ void Swapchain::createFramebuffers() {
         extent.height
     );
 
-    framebuffers.resize(textures.size());
-    for (int i = 0; i < framebuffers.size(); ++i) {
-        VkImageView views[] = {
-            textures[i].getView(),
-            depthBuffer->getView()
-        };
-
-        VkFramebufferCreateInfo fci = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-        fci.renderPass = renderPass;
-        fci.attachmentCount = 2;
-        fci.pAttachments = views;
-        fci.width = extent.width;
-        fci.height = extent.height;
-        fci.layers = 1;
-
-        VKCHECK(vkCreateFramebuffer(renderer.device, &fci, nullptr, &framebuffers[i]));
+    for (uint32_t i = 0; i < swapchainImageCount; ++i) {
+        textures.emplace_back(
+                renderer.device,
+                renderPass,
+                images[i],
+                surfaceFormat.format,
+                extent.width,
+                extent.height,
+                depthBuffer->getView()
+            );
     }
 
     // Initialize texture memory so that validation layers won't complain
@@ -259,22 +255,6 @@ VkPresentModeKHR Swapchain::selectPresentMode() {
     }
     return VK_PRESENT_MODE_FIFO_KHR; // FIFO is always available.
 }
-
-struct SurfaceFormatPriority {
-    VkFormat format;
-    int priority;
-};
-
-static const SurfaceFormatPriority surface_format_priorities[][2] = {
-    {
-        { VK_FORMAT_B8G8R8A8_UNORM,  100 },
-        { VK_FORMAT_B8G8R8A8_SRGB,   50  },
-    },
-    {
-        { VK_FORMAT_B8G8R8A8_SRGB,   100 },
-        { VK_FORMAT_B8G8R8A8_UNORM,  50  },
-    },
-};
 
 VkSurfaceFormatKHR Swapchain::selectSurfaceFormat() {
     int prio = -1;
@@ -324,7 +304,6 @@ void Swapchain::recordFrame(std::function<void(Swapchain&, VkCommandBuffer)> con
     if (r != VK_SUCCESS && r != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error(std::format("Couldn't acquire an image ({})", string_VkResult(r)));
     }
-    currentFramebuffer = framebuffers[imageIndex];
 
     VkCommandBufferBeginInfo cbbi = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
     vkResetCommandBuffer(commandBuffer, 0);
@@ -393,7 +372,7 @@ void Swapchain::beginRenderPass() {
 
     VkRenderPassBeginInfo brp = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
     brp.renderPass        = renderPass;
-    brp.framebuffer       = currentFramebuffer;
+    brp.framebuffer       = textures[imageIndex].getFramebuffer();
     brp.renderArea.offset = {0, 0};
     brp.renderArea.extent = extent;
     brp.clearValueCount   = 2;

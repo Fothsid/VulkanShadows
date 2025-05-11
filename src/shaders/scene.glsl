@@ -29,7 +29,6 @@ layout(buffer_reference, std430) buffer Lights {
 layout(buffer_reference, std430) buffer Material {
     vec4  ambient;
     vec4  diffuse;
-    vec4  specular;
     float alphaCutoff;
     uint  samplerID;
     uint  baseColorTID;

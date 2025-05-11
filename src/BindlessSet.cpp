@@ -14,6 +14,7 @@ BindlessSet::BindlessSet(Renderer& renderer, uint32_t maxImageViews, uint32_t ma
     , bufferIndex(0)
     , imageViewCounter(0)
 {
+    // Creating VkDescriptorPool
     uint32_t maxImageViewDescriptors = maxImageViews * IMAGEVIEW_BUFFER_COUNT;
 
     VkResult r;
@@ -21,10 +22,6 @@ BindlessSet::BindlessSet(Renderer& renderer, uint32_t maxImageViews, uint32_t ma
         { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, maxImageViewDescriptors },
         { VK_DESCRIPTOR_TYPE_SAMPLER,       maxSamplers             }
     };
-
-    //
-    // Descriptor pool
-    //
 
     VkDescriptorPoolCreateInfo dpci = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
     dpci.flags         = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
@@ -38,9 +35,7 @@ BindlessSet::BindlessSet(Renderer& renderer, uint32_t maxImageViews, uint32_t ma
         return;
     }
 
-    //
-    // Set layout
-    //
+    // Creating VkDescriptorSetLayout
     const uint32_t bindingCount = 2;
     VkDescriptorSetLayoutBinding bindings[bindingCount];
     memset(bindings, 0, sizeof(bindings));
@@ -75,9 +70,7 @@ BindlessSet::BindlessSet(Renderer& renderer, uint32_t maxImageViews, uint32_t ma
     layoutci.pBindings    = bindings;
     VKCHECK(vkCreateDescriptorSetLayout(renderer.getDevice(), &layoutci, nullptr, &layout));
 
-    //
-    // Descriptor sets
-    //
+    // Creating VkDescriptorSet
     VkDescriptorSetVariableDescriptorCountAllocateInfo vcountai = {
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO
     };

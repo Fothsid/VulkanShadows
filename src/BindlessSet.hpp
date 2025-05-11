@@ -13,12 +13,9 @@ public:
     static constexpr uint32_t SAMPLERS_BINDING       = 0;
     static constexpr uint32_t IMAGEVIEW_BINDING      = 1;
 
-    // NOTE: Might come in handy in the future when using multiple
-    // frames in flight so that we don't start overwriting
-    // descriptors of the previous frame when recording
-    // the command buffer for the next frame.
+    // NOTE: Should be increased if using multiple frames in flight.
     static constexpr uint32_t IMAGEVIEW_BUFFER_COUNT = 1;
-
+    
     BindlessSet(Renderer& renderer, uint32_t maxImageViews = 16384, uint32_t maxSamplers = 32);
     ~BindlessSet();
     
@@ -28,12 +25,11 @@ public:
     /// Move constructor 
     BindlessSet(BindlessSet&&);
 
-    /// "Allocates" an image view index via an internal counter.
+    /// Bump-allocates an image view index via an internal counter.
     /// Returns the allocated index.
     uint32_t addImageView(VkImageView imageView);
 
-    /// Resets the internal image view counter. Index 0 is reserved for
-    /// no texture.
+    /// Resets the internal image view counter.
     void clearImageViews();
 
     /// Returns the current image view count.
