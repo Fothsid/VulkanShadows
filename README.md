@@ -6,9 +6,13 @@ This is an application demonstrating several shadow-rendering techniques using V
 - Silhouette-based shadow volumes
 - Cube shadow mapping
 
-![vulkan-shadows-demo](screenshot.png)
+![vulkan-shadows-demo](screenshot.webp)
+
+(Screenshot of the [Amazon Lumberyard Bistro](https://developer.nvidia.com/orca/amazon-lumberyard-bistro) scene in the result program.)
 
 ## Building
+
+Compiled Windows executable, along with sample scenes, can be found in the [Releases](https://github.com/Fothsid/VulkanShadows/releases) section.
 
 ### Linux
 
@@ -31,6 +35,7 @@ sudo apt install g++ libvulkan-dev vulkan-utility-libraries-dev glslc cmake git 
 2. Clone the repository and download the submodules:  
 ```
 git clone --recurse-submodules https://github.com/Fothsid/VulkanShadows.git
+cd VulkanShadows
 ```
 
 3. Generate build files using CMake:
@@ -54,6 +59,7 @@ cmake --build build --config Release
 2. Clone the repository and download the submodules:  
 ```
 git clone --recurse-submodules https://github.com/Fothsid/VulkanShadows.git
+cd VulkanShadows
 ```
 
 > WARNING: Source code downloaded via GitHub's "Download ZIP" button will not work as it does not include submodules.
@@ -73,6 +79,15 @@ This can also be done via the CMake GUI. If CMake can't find the SDL2 library, s
 Pass in a .gltf/.glb file as an argument to the program. In Windows this can be done by drag-and-dropping the file onto the executable.
 
 You can also use the `--help` parameter to list all available options.
+
+Controls:
+- `F12` -- Hide/unhide the GUI
+- Clicking outside the GUI window will enter flycam mode.
+- In flycam mode:
+    - Mouse -- Rotate the camera.
+    - `W`/`A`/`S`/`D` -- Move the camera.
+    - `Left Shift` -- Hold to increase movement speed.
+    - `Esc` -- Leave flycam mode.
 
 ## Used libraries/dependencies
 
